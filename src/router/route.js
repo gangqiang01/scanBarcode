@@ -1,6 +1,6 @@
 
 import scanBarcode from "../components/scanBarcode/list"
-
+import login from "../components/account/login"
 import main from '@/components/home'
 
 let childRoute = [
@@ -18,18 +18,36 @@ let childRoute = [
         redirect:'scanBarcode'
     }
 ]
+
 let route = [
 
     {
         path: '/',
+        component: login,
+        name: 'login',
+        beforeEnter: (to, from, next) => {
+            _g.doBeforeLoginout();
+            next();
+        }
+    },
+    {
+        path: '/main',
         name: 'main',
         component: main,
+        beforeEnter: (to, from, next) => {
+            if(cookie.checkCookie("scanBarcodeToken")){
+                next()
+            }else{
+                _g.doBeforeLoginout();
+                next("/")
+            }
+        },
         children: childRoute,
-        redirect:'/main/scanBarcode'    
+        redirect:'/main/scanBarcode',    
     },
     {
         path: '*',
-        redirect:'/main/scanBarcode'
+        redirect:'/'
     }
     
 ]

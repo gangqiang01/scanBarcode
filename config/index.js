@@ -13,7 +13,7 @@ module.exports = {
     proxyTable: {
         '/': {   
             // target: 'http://192.168.0.103:30010', 
-            target: 'http://172.21.73.22:8080',
+            target: 'http://172.21.73.159:30010',
             changeOrigin: true,  
             pathRewrite: { 
             '^/': '/' 
@@ -22,7 +22,7 @@ module.exports = {
     },
 
     // Various Dev Server settings
-    host: '192.168.213.128', // can be overwritten by process.env.HOST
+    host: '172.21.73.159', // can be overwritten by process.env.HOST
     port: 8088, // can be overwritten by process.env.PORT, if port is in use, a free one will be determined
     autoOpenBrowser: false,
     errorOverlay: true,
@@ -53,7 +53,7 @@ module.exports = {
     // Paths
     assetsRoot: path.resolve(__dirname, '../dist'),
     assetsSubDirectory: 'static',
-    assetsPublicPath: '/bulb_control/',
+    assetsPublicPath: '/scan_barcode/',
 
     /**
      * Source Maps

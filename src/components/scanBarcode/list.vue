@@ -1,24 +1,9 @@
 <template>
     <div class="cf m-t-30 p-10">
         <el-row >
-            
-            <el-col :lg="16" :md="20" class="m-t-50" :offset="4">
+            <el-col :lg="16" :md="20" class="m-t-30" :offset="4">
                 <div class="m-t-20">
-                    <div class="panel-header">
-                        <label  class="m-r-5 m-l-10">Time Period:</label>
-                        <el-select v-model="eventDate" placeholder="Please select time period" @change="selectDate()" size="small" style="width: 180px" filterable>
-                            <el-option value="All">
-                            All
-                            </el-option>
-                            <el-option 
-                            v-for="item in dateRange"
-                            :key="item.value"
-                            :label="item.label"
-                            :value="item.value">
-                            </el-option>
-                        </el-select>
-
-
+                    <div class="panel-header cf">
                         <div class="fr m-r-10"> 
                             <el-input size="small" class="w-300 m-l-10" v-model="keywords" placeholder="Keyword of device name" @keyup.enter.native="searchEventMsg(keywords)">
                                 <el-button slot="append" icon="el-icon-search"  @click.native.prevent="searchEventMsg(keywords)" ></el-button>
@@ -58,6 +43,9 @@
                         prop="content"
                         label="Content"
                         min-width="100">
+                            <template slot-scope="scope">
+                                {{scope.row.content.barcodeData}}
+                            </template>
                         </el-table-column>
                     </el-table>
                     <div class="m-t-10 cf fr">
@@ -98,22 +86,11 @@
     import handleResponse from '../restfulapi/handleResponse'
     import swalFun from "../../assets/js/swal"
     import {
-        getEventMsgByPageApi,
-        getEventMsgByPageInGroupApi,
-        getEventMsgByPageAndTypeInGroupApi,
         getEventMsgByPageAndTypeApi,
+        getEventMsgByPageAndTypeAndKeywordsApi,
         deleteEventMsgApi,
         batchDeleteEventMsgStatusApi,
-        deleteAllEventMsgApi,
-        deleteAllEventMsgByGroupApi,
-        getEventMsgByPageAndKeywordsApi,
-        getEventMsgByPageAndKeywordsInGroupApi,
-        getEventMsgByPageFromDateApi,
-        getEventMsgByPageInGroupFromDateApi,
-        getEventMsgByPageAndTypeInGroupFromDateApi,
-        getEventMsgByPageAndTypeFromDateApi,
-        deleteAllEventMsgAndTypeListApi,
-        deleteAllEventMsgByGroupAndTypeListApi
+        deleteAllEventMsgAndTypeApi
     } from "../restfulapi/eventMsgApi"
 
     import { 
@@ -149,7 +126,7 @@
                 isShowBtnGroup: false,
                 clearLoading: false,
                 batchDeleteEventMsg:  batchDeleteEventMsgStatusApi,
-                typeArray: [2],
+                type: 2,
                 keywords: "",
                 listLoading: false,
                 eventMsgIconColor: "#303133",
@@ -161,9 +138,13 @@
                     {label: month, value: monthSt},
                     {label: threeMonth, value: threeMonthSt}
                 ],
+                pkgname: "com.adv.scanbarcode",
 
-                eventDate: "All"
             }
+        },
+
+        components:{
+            btnGroup
         },
 
         methods: {
@@ -176,10 +157,6 @@
                 }
 
                 this.realKeywords = keywords
-                this.eventDate = "All"
-                this.$refs.eventTable.clearFilter();
-                this.typeArray = typeArray;
-
                 this.currentPage = 1;
                 this.getEventMsgLikeDevname(this.realKeywords);
             },
@@ -188,22 +165,12 @@
                 
                 //clear filter
                 this.listLoading = true;
-                getEventMsgByPageAndKeywordsApi(keywords, this.currentPage, this.limit).then((data) => {
+                getEventMsgByPageAndTypeAndKeywordsApi(this.type, this.pkgname, keywords, this.currentPage, this.limit).then((data) => {
                     this.listLoading = false;
                     handleResponse(data, (res) => { 
                         this.assignEventMsgData(res);
                     })
                 })
-            },
-
-            selectDate(){
-                this.currentPage = 1;
-                this.refreshEventMsg();
-            },
-
-            refreshEventMsg(){
-                this.initData();
-                this.getEventMsg();
             },
 
             selectItem(val) {
@@ -219,31 +186,13 @@
                 if(this.realKeywords){
                     this.getEventMsgLikeDevname(this.realKeywords);
                 }else{
-                    this.getEventMsg();
-                }
-
-            },
-
-            getEventMsg(){
-                this.listLoading = true;
-                if(this.eventDate == "All"){
                     this.getAllEventMsg();
-                }else{
-                    this.getAllEventMsgFromDate()
                 }
+
             },
 
             getAllEventMsg(){
-                getEventMsgByPageAndTypeApi(this.typeArray, this.currentPage, this.limit).then((data) => {
-                    this.listLoading = false;
-                    handleResponse(data, (res) => {
-                        this.assignEventMsgData(res);
-                    })
-                })
-                
-            },
-            getAllEventMsgFromDate(){
-                getEventMsgByPageAndTypeFromDateApi(this.eventDate, this.typeArray, this.currentPage, this.limit).then((data) => {
+                getEventMsgByPageAndTypeApi(this.type, this.pkgname, this.currentPage, this.limit).then((data) => {
                     this.listLoading = false;
                     handleResponse(data, (res) => {
                         this.assignEventMsgData(res);
@@ -272,7 +221,7 @@
                             handleResponse(data, (res) => {
                                 if(res.status === "CHANGED"){
                                     this.$swal("", this.$t('global.success'), "success", {button: this.$t('global.confirm')}).then(() => {
-                                        this.refreshEventMsg();
+                                        this.getAllEventMsg();
                                     })
                                 }else{
                                     _g.handleError(res);
@@ -286,7 +235,7 @@
             //delete appstatus $emit
             isSuccess(result){
                 if(result){
-                    this.refreshEventMsg();
+                    this.getAllEventMsg();
                 }
             },
 
@@ -295,12 +244,12 @@
                 _g.swalInfoDo(this.$t('global.areYouSure'), this.$t('global.clearAll'), this.$t('global.confirm'), this.$t('global.cancel')).then((result) => {
                     if(result){
                         this.clearLoading = true;
-                        deleteAllEventMsgAndTypeListApi(this.typeArray).then((data) => {
+                        deleteAllEventMsgAndTypeApi(this.type, this.pkgname).then((data) => {
                             this.clearLoading = false;
                             handleResponse((data), (res) => {
                                 if(res.status === "CHANGED"){
                                     this.$swal("", this.$t('global.success'), "success", {button: this.$t('global.confirm')}).then(() => {
-                                        this.refreshEventMsg();
+                                        this.getAllEventMsg();
                                     })
                                 }else{
                                     _g.handleError(res);
@@ -319,7 +268,7 @@
                             if(data){
                                 let msgObj = JSON.parse(data);
                                 if(msgObj.appname == this.pkgname){
-                                    this.refreshEventMsg();
+                                    this.getAllEventMsg();
                                 }
                                 
                             }
@@ -338,14 +287,14 @@
                 this.eventMsgTableList = [];
                 this.isShowBtnGroup= false;
                 this.isshow= false;
-                this.typeArray = [2];
+                this.type = 2;
                 this.realKeywords = "";
                 this.keywords = "";
             }
         },
 
         created(){
-            this.getEventMsg();
+            this.getAllEventMsg();
             this.eventSourceConn();
         },
 
@@ -358,20 +307,6 @@
 
 <style lang="scss" scoped>
 @import "../../assets/css/colors";
-    .msg_icon{
-        position: relative;
-        top: 4px;
-    }
-    .error_icon{
-        margin-right: 4px;
-
-    }
-    .icon{
-        margin-right: 5px;
-        position: relative;
-        top: 4px;
-    }
-
 
     
 </style>
