@@ -1,7 +1,7 @@
-# m2mlink
+# ScanBarcode
 
-> m2mlink project by vue framework . The main technologies used are vue axious scss es6 . 
-this project mainly applies to remote control of remote control device status.
+> ScanBarcode project by vue framework . The main technologies used are vue axious scss es6 . 
+This project is mainly used to  collect the data reported by the device scan barcode based on androidDM for secondary development
 
 ## Build Setup
 ## request nodejs 9.6.0V
